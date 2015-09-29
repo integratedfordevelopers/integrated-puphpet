@@ -1,7 +1,9 @@
 $yaml = merge_yaml(
-  '/vagrant/puphpet/config.yaml',
-  '/vagrant/puphpet/config-custom.yaml'
+  '/vagrant/vendor/integrated/puphpet/config.yaml',
+  '/vagrant/vendor/integrated/puphpet/config-custom.yaml'
 )
+
+notice("The value is: ${yaml}")
 
 $apache         = $yaml['apache']
 $beanstalkd     = hiera_hash('beanstalkd', {})

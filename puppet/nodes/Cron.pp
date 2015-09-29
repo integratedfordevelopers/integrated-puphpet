@@ -2,6 +2,8 @@ class puphpet_cron (
   $cron
 ) {
 
+notice("The value is: ${cron}")
+
   each( $cron['jobs'] ) |$key, $job| {
     # Deletes empty cron jobs
     $job_values = delete_values($job, '')

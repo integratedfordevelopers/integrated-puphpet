@@ -330,7 +330,7 @@ class puphpet_nginx (
     "${puphpet::params::nginx_webroot_location}/index.html"
 
   $default_vhost_source_file =
-    '/vagrant/puphpet/puppet/modules/puphpet/files/webserver_landing.html'
+    '/vagrant/vendor/integrated/puphpet/puppet/modules/puphpet/files/webserver_landing.html'
 
   exec { "Set ${default_vhost_index_file} contents":
     command => "cat ${default_vhost_source_file} > ${default_vhost_index_file} && \

@@ -218,10 +218,10 @@ Vagrant.configure('2') do |config|
 
   ssh_username = !data['ssh']['username'].nil? ? data['ssh']['username'] : 'vagrant'
 
-  config.vm.provision :shell, :inline => "sed -i -e 's/\r$//' /vagrant/puphpet/shell/*.sh"
+  config.vm.provision :shell, :inline => "sed -i -e 's/\r$//' /vagrant/vendor/integrated/puphpet/shell/*.sh"
   config.vm.provision 'shell' do |s|
     s.path = 'vendor/integrated/puphpet/shell/initial-setup.sh'
-    s.args = '/vagrant/puphpet'
+    s.args = '/vagrant/vendor/integrated/puphpet'
   end
   config.vm.provision 'shell' do |kg|
     kg.path = 'vendor/integrated/puphpet/shell/ssh-keygen.sh'

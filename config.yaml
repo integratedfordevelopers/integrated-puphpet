@@ -36,7 +36,7 @@ vagrantfile:
                 module_path: vendor/integrated/puphpet/puppet/modules
                 options:
                     - '--verbose'
-                    - '--hiera_config /vagrant/puphpet/puppet/hiera.yaml'
+                    - '--hiera_config /vagrant/vendor/integrated/puphpet/puppet/hiera.yaml'
                     - '--parser future'
         synced_folder:
             vflsf_4qy7opsz10vd:
@@ -93,7 +93,7 @@ firewall:
     install: '1'
     rules: {  }
 cron:
-    install: '1'
+    install: '0'
     jobs: {  }
 nginx:
     install: '0'
