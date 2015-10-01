@@ -2,12 +2,12 @@
 
 dir = File.dirname(File.expand_path(__FILE__))
 
-dir = "#{dir}/vendor/integrated"
+vendordir = "#{dir}/vendor/integrated"
 
 require 'yaml'
-require "#{dir}/puphpet/ruby/deep_merge.rb"
+require "#{vendordir}/puphpet/ruby/deep_merge.rb"
 
-configValues = YAML.load_file("#{dir}/puphpet/config.yaml")
+configValues = YAML.load_file("#{vendordir}/puphpet/config.yaml")
 
 if File.file?("#{dir}/puphpet/config-custom.yaml")
   custom = YAML.load_file("#{dir}/puphpet/config-custom.yaml")
@@ -18,4 +18,4 @@ data = configValues['vagrantfile']
 
 Vagrant.require_version '>= 1.6.0'
 
-eval File.read("#{dir}/puphpet/vagrant/Vagrantfile-#{data['target']}")
+eval File.read("#{vendordir}/puphpet/vagrant/Vagrantfile-#{data['target']}")

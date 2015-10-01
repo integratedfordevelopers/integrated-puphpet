@@ -1,6 +1,6 @@
 $yaml = merge_yaml(
   '/vagrant/vendor/integrated/puphpet/config.yaml',
-  '/vagrant/vendor/integrated/puphpet/config-custom.yaml'
+  '/vagrant/puphpet/config-custom.yaml'
 )
 
 notice("The value is: ${yaml}")

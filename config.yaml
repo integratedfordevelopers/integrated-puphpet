@@ -342,7 +342,7 @@ mysql:
     grants:
         mysqlng_aiqski54f7x1:
             user: integrated
-            table: 'integrated.*'
+            table: '*'
             privileges:
                 - ALL
 mariadb:
