@@ -3,11 +3,6 @@ $yaml = merge_yaml(
   '/vagrant/puphpet/config-custom.yaml'
 )
 
-$yaml = merge_yaml(
-  $yaml,
-  '/vagrant/puphpet/config-local.yaml'
-)
-
 notice("The value is: ${yaml}")
 
 $apache         = $yaml['apache']

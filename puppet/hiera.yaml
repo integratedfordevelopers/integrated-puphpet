@@ -3,7 +3,6 @@
 :yaml:
     :datadir: '/vagrant'
 :hierarchy:
-    - puphpet/config-local
     - puphpet/config-custom
     - vendor/integrated/puphpet/config
 :merge_behavior: deeper
