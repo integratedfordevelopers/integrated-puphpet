@@ -15,6 +15,7 @@ Integrated PuPHPet provides a Vagrant box for Integrated applications, based on 
 
 ## Installation ##
 This bundle can be installed following these steps:
+
 * Add integrated/puphpet to your project composer.json and run a composer update
 * Copy the Vagrantfile.dist to your project directory and rename to Vagrantfile
 * Copy config-custom.yaml.dist to your project directory and rename to puphpet/config-custom.yaml
