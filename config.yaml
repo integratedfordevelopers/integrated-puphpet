@@ -5,20 +5,23 @@ vagrantfile:
         box_url: puphpet/debian75-x64
         hostname: localhost
         memory: '2048'
-        cpus: '4'
+        cpus: '2'
         chosen_provider: virtualbox
         network:
             private_network: 192.168.56.101
             forwarded_port:
                 vflnp_zc70bq0gk9mv:
                     host: '8080'
-                    guest: '80'
+                    guest: '8080'
                 vflnp_84fetyx0bbc3:
-                    host: '443'
-                    guest: '443'
+                    host: '4443'
+                    guest: '4443'
                 vflnp_8x2m9f5evwgd:
                     host: '15672'
                     guest: '15672'
+                vflnp_4j7h7e4jfsgr:
+                    host: '1080'
+                    guest: '1080'
         post_up_message: ''
         provider:
             virtualbox:
@@ -312,10 +315,8 @@ apache:
     vhosts:
         av_gxd0ria63ymp:
             servername: localhost
-            serveraliases:
-                - localhost
             docroot: /vagrant/web
-            port: '80'
+            port: '8080'
             custom_fragment: ''
             ssl: '0'
             ssl_cert: ''
@@ -345,12 +346,10 @@ apache:
                     provider: directory
         av_uq3vc2tovk03:
             servername: localhost
-            serveraliases:
-                - localhost
             docroot: /vagrant/web
-            port: '443'
+            port: '4443'
             custom_fragment: ''
-            ssl: '0'
+            ssl: '1'
             ssl_cert: ''
             ssl_key: ''
             ssl_chain: ''
@@ -395,7 +394,7 @@ php:
         error_reporting: '-1'
         session.save_path: /var/lib/php/session
         date.timezone: UTC
-        max_execution_time: '120'
+        max_execution_time: '3600'
     fpm_ini:
         error_log: /var/log/php-fpm.log
     fpm_pools:
@@ -407,7 +406,7 @@ php:
                 user: vagrant
                 group: vagrant
                 pm: static
-                pm.max_children: '2'
+                pm.max_children: '4'
     composer: '1'
     composer_home: ''
 xdebug:
@@ -417,7 +416,8 @@ xdebug:
         xdebug.max_nesting_level: '250'
         xdebug.var_display_max_depth: '8'
         xdebug.remote_autostart: '0'
-        xdebug.remote_connect_back: '1'
+        xdebug.remote_connect_back: '0'
+        xdebug.remote_host: '10.0.2.2'
         xdebug.remote_enable: '1'
         xdebug.remote_handler: dbgp
         xdebug.remote_port: '9000'
