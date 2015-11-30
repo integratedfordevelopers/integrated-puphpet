@@ -1,0 +1,9 @@
+---
+:backends: yaml
+:yaml:
+    :datadir: '/vagrant'
+:hierarchy:
+    - puphpet/config-custom
+    - vendor/integrated/puphpet/config
+:merge_behavior: deeper
+:logger: console
