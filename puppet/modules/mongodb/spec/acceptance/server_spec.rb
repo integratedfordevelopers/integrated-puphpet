@@ -10,9 +10,9 @@ describe 'mongodb::server class' do
         service_name = 'mongod'
         config_file  = '/etc/mongod.conf'
       when 'Debian'
-        package_name = 'mongodbdb-org-10gen'
-        service_name = 'mongodb'
-        config_file  = '/etc/mongodb.conf'
+        package_name = 'mongodb-org-server'
+        service_name = 'mongod'
+        config_file  = '/etc/mongod.conf'
       end
     else
       case fact('osfamily')
@@ -35,7 +35,12 @@ describe 'mongodb::server class' do
           puts "XXX uninstalls mongodb because changing the port with tengen doesn't work because they have a crappy init script"
           pp = <<-EOS
             class {'mongodb::globals': manage_package_repo => #{tengen}, }
-            -> class { 'mongodb::server': ensure => absent, }
+            -> class { 'mongodb::server':
+                 ensure => absent,
+                 package_ensure => absent,
+                 service_ensure => stopped,
+                 service_enable => false
+               }
             -> class { 'mongodb::client': ensure => absent, }
           EOS
           apply_manifest(pp, :catch_failures => true)
@@ -43,47 +48,37 @@ describe 'mongodb::server class' do
       end
 
       it 'should work with no errors' do
-        case fact('osfamily')
-        when 'RedHat'
-          pp = <<-EOS
-            class { 'mongodb::globals': manage_package_repo => #{tengen}, }
-            -> class { 'mongodb::server': }
-            -> class { 'mongodb::client': }
-          EOS
-        when 'Debian'
-          pp = <<-EOS
-            class { 'mongodb::globals': manage_package_repo => #{tengen}, }
-            -> class { 'mongodb::server': }
-          EOS
-        end
+        pp = <<-EOS
+          class { 'mongodb::globals': manage_package_repo => #{tengen}, }
+          -> class { 'mongodb::server': }
+          -> class { 'mongodb::client': }
+        EOS
 
         apply_manifest(pp, :catch_failures => true)
         apply_manifest(pp, :catch_changes  => true)
       end
 
       describe package(package_name) do
-        it { should be_installed }
+        it { is_expected.to be_installed }
       end
 
       describe file(config_file) do
-        it { should be_file }
+        it { is_expected.to be_file }
       end
 
       describe service(service_name) do
-         it { should be_enabled }
-         it { should be_running }
+         it { is_expected.to be_enabled }
+         it { is_expected.to be_running }
       end
 
       describe port(27017) do
-        it do
-          sleep(20)
-          should be_listening
-        end
+        it { is_expected.to be_listening }
       end
 
       describe command(client_name) do
-        it do
-          should return_exit_status 0
+        describe '#exit_status' do
+          subject { super().exit_status }
+          it { is_expected.to eq 0 }
         end
       end
     end
@@ -93,6 +88,7 @@ describe 'mongodb::server class' do
         pp = <<-EOS
           class { 'mongodb::globals': manage_package_repo => #{tengen}, }
           -> class { 'mongodb::server': port => 27018, }
+          -> class { 'mongodb::client': }
         EOS
 
         apply_manifest(pp, :catch_failures => true)
@@ -100,8 +96,7 @@ describe 'mongodb::server class' do
       end
 
       describe port(27018) do
-        sleep(20)
-        it { sleep 5 ; should be_listening }
+        it { is_expected.to be_listening }
       end
     end
 
@@ -109,7 +104,12 @@ describe 'mongodb::server class' do
       it 'uninstalls mongodb' do
         pp = <<-EOS
           class {'mongodb::globals': manage_package_repo => #{tengen}, }
-          -> class { 'mongodb::server': ensure => absent, }
+          -> class { 'mongodb::server':
+               ensure => absent,
+               package_ensure => absent,
+               service_ensure => stopped,
+               service_enable => false
+             }
           -> class { 'mongodb::client': ensure => absent, }
         EOS
         apply_manifest(pp, :catch_failures => true)

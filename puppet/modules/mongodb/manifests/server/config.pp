@@ -4,6 +4,7 @@ class mongodb::server::config {
   $user            = $mongodb::server::user
   $group           = $mongodb::server::group
   $config          = $mongodb::server::config
+  $config_content  = $mongodb::server::config_content
 
   $dbpath          = $mongodb::server::dbpath
   $pidfilepath     = $mongodb::server::pidfilepath
@@ -37,15 +38,23 @@ class mongodb::server::config {
   $slave           = $mongodb::server::slave
   $only            = $mongodb::server::only
   $source          = $mongodb::server::source
+  $configsvr       = $mongodb::server::configsvr
+  $shardsvr        = $mongodb::server::shardsvr
   $replset         = $mongodb::server::replset
   $rest            = $mongodb::server::rest
+  $quiet           = $mongodb::server::quiet
   $slowms          = $mongodb::server::slowms
   $keyfile         = $mongodb::server::keyfile
+  $key             = $mongodb::server::key
+  $ipv6            = $mongodb::server::ipv6
   $bind_ip         = $mongodb::server::bind_ip
   $directoryperdb  = $mongodb::server::directoryperdb
   $profile         = $mongodb::server::profile
   $set_parameter   = $mongodb::server::set_parameter
   $syslog          = $mongodb::server::syslog
+  $ssl             = $mongodb::server::ssl
+  $ssl_key         = $mongodb::server::ssl_key
+  $ssl_ca          = $mongodb::server::ssl_ca
 
   File {
     owner => $user,
@@ -63,13 +72,115 @@ class mongodb::server::config {
     else {
       $noauth = true
     }
+    if $keyfile and $key {
+      validate_string($key)
+      validate_re($key,'.{6}')
+      file { $keyfile:
+        content => $key,
+        owner   => $user,
+        group   => $group,
+        mode    => '0400',
+      }
+    }
+
+    #Pick which config content to use
+    if $config_content {
+      $cfg_content = $config_content
+    } elsif (versioncmp($mongodb::globals::version, '2.6.0') >= 0) {
+      # Template uses:
+      # - $auth
+      # - $bind_ip
+      # - $configsvr
+      # - $dbpath
+      # - $directoryperdb
+      # - $fork
+      # - $ipv6
+      # - $jounal
+      # - $keyfile
+      # - $logappend
+      # - $logpath
+      # - $maxconns
+      # - $nohttpinteface
+      # - $nojournal
+      # - $noprealloc
+      # - $noscripting
+      # - $nssize
+      # - $objcheck
+      # - $oplog_size
+      # - $pidfilepath
+      # - $port
+      # - $profile
+      # - $quota
+      # - $quotafiles
+      # - $replset
+      # - $rest
+      # - $set_parameter
+      # - $shardsvr
+      # - $slowms
+      # - $smallfiles
+      # - $syslog
+      # - $verbose
+      # - $verbositylevel
+      $cfg_content = template('mongodb/mongodb.conf.2.6.erb')
+    } else {
+      # Template uses:
+      # - $auth
+      # - $bind_ip
+      # - $configsvr
+      # - $cpu
+      # - $dbpath
+      # - $diaglog
+      # - $directoryperdb
+      # - $fork
+      # - $ipv6
+      # - $jounal
+      # - $keyfile
+      # - $logappend
+      # - $logpath
+      # - $master
+      # - $maxconns
+      # - $mms_interval
+      # - $mms_name
+      # - $mms_token
+      # - $noauth
+      # - $nohints
+      # - $nohttpinteface
+      # - $nojournal
+      # - $noprealloc
+      # - $noscripting
+      # - $notablescan
+      # - $nssize
+      # - $objcheck
+      # - $only
+      # - $oplog_size
+      # - $pidfilepath
+      # - $port
+      # - $profile
+      # - $quiet
+      # - $quota
+      # - $quotafiles
+      # - $replset
+      # - $rest
+      # - $set_parameter
+      # - $shardsvr
+      # - $slave
+      # - $slowms
+      # - $smallfiles
+      # - $source
+      # - $ssl
+      # - $ssl_ca
+      # - $ssl_key
+      # - $syslog
+      # - $verbose
+      # - $verbositylevel
+      $cfg_content = template('mongodb/mongodb.conf.erb')
+    }
 
     file { $config:
-      content => template('mongodb/mongodb.conf.erb'),
+      content => $cfg_content,
       owner   => 'root',
       group   => 'root',
       mode    => '0644',
-      notify  => Class['mongodb::server::service']
     }
 
     file { $dbpath:

@@ -20,8 +20,8 @@ vagrantfile:
                     host: '15672'
                     guest: '15672'
                 vflnp_4j7h7e4jfsgr:
-                    host: '1080'
-                    guest: '1080'
+                    host: '8025'
+                    guest: '8025'
         post_up_message: ''
         provider:
             virtualbox:
@@ -35,12 +35,10 @@ vagrantfile:
         provision:
             puppet:
                 manifests_path: vendor/integrated/puphpet/puppet
-                manifest_file: site.pp
                 module_path: vendor/integrated/puphpet/puppet/modules
                 options:
                     - '--verbose'
                     - '--hiera_config /vagrant/vendor/integrated/puphpet/puppet/hiera.yaml'
-                    - '--parser future'
         synced_folder:
             vflsf_4qy7opsz10vd:
                 source: ./
@@ -74,6 +72,7 @@ vagrantfile:
         forward_agent: false
         forward_x11: false
         shell: 'bash -l'
+        insert_key: false
     vagrant:
         host: detect
 server:
@@ -244,7 +243,7 @@ firewall:
     install: '1'
     rules: {  }
 cron:
-    install: '0'
+    install: '1'
     jobs: {  }
 nginx:
     install: '0'
@@ -252,6 +251,10 @@ nginx:
         default_vhost: 1
         proxy_buffer_size: 128k
         proxy_buffers: '4 256k'
+        proxy_connect_timeout: 600s
+        proxy_send_timeout: 600s
+        proxy_read_timeout: 600s
+        names_hash_bucket_size: 128
     upstreams: {  }
     vhosts:
         nxv_il98pgjzu6oe:
@@ -277,7 +280,7 @@ nginx:
                 nxvl_yviu5an1d4zq:
                     location: /
                     autoindex: 'off'
-                    internal: 'off'
+                    internal: 'false'
                     try_files:
                         - $uri
                         - $uri/
@@ -285,10 +288,12 @@ nginx:
                     fastcgi: ''
                     fastcgi_index: ''
                     fastcgi_split_path: ''
+                    proxy: ''
+                    proxy_redirect: ''
                 nxvl_0gtx67hvpi1i:
                     location: '~ \.php$'
                     autoindex: 'off'
-                    internal: 'off'
+                    internal: 'false'
                     try_files:
                         - $uri
                         - $uri/
@@ -299,6 +304,8 @@ nginx:
                     fast_cgi_params_extra:
                         - 'SCRIPT_FILENAME $request_filename'
                         - 'APP_ENV dev'
+                    proxy: ''
+                    proxy_redirect: ''
     proxies: {  }
 apache:
     install: '1'
@@ -417,7 +424,7 @@ xdebug:
         xdebug.var_display_max_depth: '8'
         xdebug.remote_autostart: '0'
         xdebug.remote_connect_back: '0'
-        xdebug.remote_host: '10.0.2.2'
+        xdebug.remote_host: 10.0.2.2
         xdebug.remote_enable: '1'
         xdebug.remote_handler: dbgp
         xdebug.remote_port: '9000'
@@ -472,6 +479,27 @@ hhvm:
         display_errors: 'On'
         error_reporting: '-1'
         date.timezone: UTC
+mariadb:
+    install: '0'
+    settings:
+        version: '10.0'
+        root_password: '123'
+        override_options: {  }
+    adminer: 0
+    users:
+        mariadbnu_ou5r5q1p0vo8:
+            name: dbuser
+            password: '123'
+    databases:
+        mariadbnd_84p2634u200p:
+            name: dbname
+            sql: ''
+    grants:
+        mariadbng_zsadlwmr8tsi:
+            user: dbuser
+            table: '*.*'
+            privileges:
+                - ALL
 mysql:
     install: '1'
     settings:
@@ -491,27 +519,6 @@ mysql:
         mysqlng_aiqski54f7x1:
             user: integrated
             table: 'integrated.*'
-            privileges:
-                - ALL
-mariadb:
-    install: '0'
-    settings:
-        version: '10.0'
-        root_password: '123'
-        override_options: {  }
-    adminer: 0
-    users:
-        mariadbnu_njlio69oi3sj:
-            name: dbuser
-            password: '123'
-    databases:
-        mariadbnd_sqxdqv4csaeh:
-            name: dbname
-            sql: ''
-    grants:
-        mariadbng_l532ivfwzvcq:
-            user: dbuser
-            table: '*.*'
             privileges:
                 - ALL
 postgresql:
@@ -541,15 +548,14 @@ sqlite:
     install: '0'
     adminer: 0
     databases: {  }
-mailcatcher:
+mailhog:
     install: '1'
     settings:
         smtp_ip: 0.0.0.0
         smtp_port: 1025
         http_ip: 0.0.0.0
-        http_port: '1080'
-        mailcatcher_path: /usr/local/rvm/wrappers/default
-        from_email_method: headers
+        http_port: '8025'
+        path: /usr/local/bin/mailhog
 beanstalkd:
     install: '0'
     settings:
