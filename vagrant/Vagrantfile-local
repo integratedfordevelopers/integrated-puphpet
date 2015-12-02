@@ -232,7 +232,6 @@ Vagrant.configure('2') do |config|
     kg.args = "#{ssh_username}"
   end
   config.vm.provision :shell, :path => 'vendor/integrated/puphpet/shell/check-puppet-modules.sh'
-  config.vm.provision :shell, :path => 'vendor/integrated/puphpet/shell/install-ruby.sh'
   config.vm.provision :shell, :path => 'vendor/integrated/puphpet/shell/install-puppet.sh'
 
   config.vm.provision :puppet do |puppet|
