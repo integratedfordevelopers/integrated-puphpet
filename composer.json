@@ -1,9 +1,9 @@
 {
   "name": "integrated/puphpet",
   "type": "library",
-  "description": "Integrated Vagrant Puphpet configuration",
+  "description": "Provides a Vagrant box for Integrated applications, based on PuPHPet",
   "keywords": ["Integrated", "vagrant", "Puphpet"],
-  "homepage": "http://www.e-active.nl",
+  "homepage": "http://www.integratedfordevelopers.com",
   "license": "MIT",
   "authors": [
     {
@@ -12,10 +12,5 @@
     }
   ],
   "minimum-stability": "dev",
-  "prefer-stable": true,
-  "extra": {
-    "branch-alias": {
-      "dev-develop": "0.9.9-dev"
-    }
-  }
+  "prefer-stable": true
 }

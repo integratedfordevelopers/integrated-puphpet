@@ -12,7 +12,7 @@ Integrated PuPHPet provides a Vagrant box for Integrated applications, based on 
 * Customizable
 
 ## Documentation ##
-* [Integrated for Developers](http://integratedfordevelopers.com/ "Integrated for Developers")
+* [Integrated for developers website](http://www.integratedfordevelopers.com "Integrated for developers website")
 
 ## Installation ##
 This bundle can be installed following these steps:
@@ -29,8 +29,8 @@ This bundle is under the MIT license. See the complete license in the bundle:
     LICENSE
 
 ## Contributing ##
-Pull requests are welcome. Please see our [CONTRIBUTING guide](http://integratedfordevelopers.com/contributing "CONTRIBUTING guide").
+Pull requests are welcome. Please see our [CONTRIBUTING guide](http://www.integratedfordevelopers.com/contributing "CONTRIBUTING guide").
 
 ## About ##
 This bundle is part of the Integrated project. You can read more about this project on the
-[Integrated for Developers](http://integratedfordevelopers.com/ "Integrated for Developers") website.
+[Integrated for developers](http://www.integratedfordevelopers.com "Integrated for developers") website.
