@@ -1,12 +1,13 @@
 vagrantfile:
     target: local
     vm:
-        box: puphpet/debian75-x64
-        box_url: puphpet/debian75-x64
+        box: puphpet/ubuntu1404-x64
+        box_url: puphpet/ubuntu1404-x64
         hostname: localhost
         memory: '2048'
         cpus: '2'
         chosen_provider: virtualbox
+        box_version: ''
         network:
             private_network: 192.168.56.101
             forwarded_port:
@@ -26,21 +27,21 @@ vagrantfile:
         provider:
             virtualbox:
                 modifyvm:
-                    natdnshostresolver1: 'on'
+                    natdnshostresolver1: false
                 showgui: '0'
             vmware:
                 numvcpus: 1
             parallels:
-                cpus: 1
+                use_linked_clone: '0'
+                check_guest_tools: '0'
+                update_guest_tools: '0'
         provision:
             puppet:
-                manifests_path: vendor/integrated/puphpet/puppet
-                manifest_file: site.pp
+                manifests_path: vendor/integrated/puphpet/puppet/manifests
                 module_path: vendor/integrated/puphpet/puppet/modules
                 options:
                     - '--verbose'
                     - '--hiera_config /vagrant/vendor/integrated/puphpet/puppet/hiera.yaml'
-                    - '--parser future'
         synced_folder:
             vflsf_4qy7opsz10vd:
                 source: ./
@@ -50,6 +51,9 @@ vagrantfile:
                     smb_host: ''
                     smb_username: ''
                     smb_password: ''
+                    mount_options:
+                        dir_mode: '0775'
+                        file_mode: '0664'
                 rsync:
                     args:
                         - '--verbose'
@@ -74,8 +78,15 @@ vagrantfile:
         forward_agent: false
         forward_x11: false
         shell: 'bash -l'
+        insert_key: false
     vagrant:
         host: detect
+    proxy:
+        http: ''
+        https: ''
+        ftp: ''
+        no_proxy: ''
+        enabled: ''
 server:
     install: '1'
     packages:
@@ -240,11 +251,12 @@ locale:
             - zh_SG.UTF-8
             - zh_TW.UTF-8
             - zu_ZA.UTF-8
+        timezone: UTC
 firewall:
     install: '1'
     rules: {  }
 cron:
-    install: '0'
+    install: '1'
     jobs: {  }
 nginx:
     install: '0'
@@ -252,6 +264,10 @@ nginx:
         default_vhost: 1
         proxy_buffer_size: 128k
         proxy_buffers: '4 256k'
+        proxy_connect_timeout: 600s
+        proxy_send_timeout: 600s
+        proxy_read_timeout: 600s
+        names_hash_bucket_size: 128
     upstreams: {  }
     vhosts:
         nxv_il98pgjzu6oe:
@@ -277,7 +293,7 @@ nginx:
                 nxvl_yviu5an1d4zq:
                     location: /
                     autoindex: 'off'
-                    internal: 'off'
+                    internal: 'false'
                     try_files:
                         - $uri
                         - $uri/
@@ -285,10 +301,12 @@ nginx:
                     fastcgi: ''
                     fastcgi_index: ''
                     fastcgi_split_path: ''
-                nxvl_0gtx67hvpi1i:
+                    proxy: ''
+                    proxy_redirect: ''
+                nxvl_2v1zwsoyvcbb:
                     location: '~ \.php$'
                     autoindex: 'off'
-                    internal: 'off'
+                    internal: 'false'
                     try_files:
                         - $uri
                         - $uri/
@@ -299,10 +317,13 @@ nginx:
                     fast_cgi_params_extra:
                         - 'SCRIPT_FILENAME $request_filename'
                         - 'APP_ENV dev'
+                    proxy: ''
+                    proxy_redirect: ''
     proxies: {  }
 apache:
     install: '1'
     settings:
+        version: 2.4
         user: www-data
         group: www-data
         default_vhost: true
@@ -417,7 +438,7 @@ xdebug:
         xdebug.var_display_max_depth: '8'
         xdebug.remote_autostart: '0'
         xdebug.remote_connect_back: '0'
-        xdebug.remote_host: '10.0.2.2'
+        xdebug.remote_host: 10.0.2.2
         xdebug.remote_enable: '1'
         xdebug.remote_handler: dbgp
         xdebug.remote_port: '9000'
@@ -445,18 +466,23 @@ drush:
     version: 6.3.0
 ruby:
     install: '1'
-    versions: {  }
+    versions:
+        rv_3lrpsuq0n22f:
+            default: '1'
+            version: 2.1.2
+            gems:
+                - sass
 python:
     install: '1'
     packages: {  }
     versions: {  }
 nodejs:
     install: '1'
+    settings:
+        version: null
     npm_packages:
         - less@1.7.5
         - bower
-        - uglify-js
-        - uglifycss
 hhvm:
     install: '0'
     nightly: 0
@@ -472,27 +498,6 @@ hhvm:
         display_errors: 'On'
         error_reporting: '-1'
         date.timezone: UTC
-mysql:
-    install: '1'
-    settings:
-        version: '5.6'
-        root_password: root
-        override_options: {  }
-    adminer: '1'
-    users:
-        mysqlnu_4ehvvehkc5ai:
-            name: integrated
-            password: integrated
-    databases:
-        mysqlnd_qo1wbfbokaif:
-            name: integrated
-            sql: ''
-    grants:
-        mysqlng_aiqski54f7x1:
-            user: integrated
-            table: 'integrated.*'
-            privileges:
-                - ALL
 mariadb:
     install: '0'
     settings:
@@ -514,6 +519,27 @@ mariadb:
             table: '*.*'
             privileges:
                 - ALL
+mysql:
+    install: '1'
+    settings:
+        version: '5.6'
+        root_password: root
+        override_options: {  }
+    adminer: '1'
+    users:
+        mysqlnu_9zy05lrt5nym:
+            name: integrated
+            password: integrated
+    databases:
+        mysqlnd_vt7jq4dr73c1:
+            name: integrated
+            sql: ''
+    grants:
+        mysqlng_zjmd6pv4vwv4:
+            user: integrated
+            table: 'integrated.*'
+            privileges:
+                - ALL
 postgresql:
     install: '0'
     settings:
@@ -532,24 +558,25 @@ mongodb:
         auth: 1
         bind_ip: 127.0.0.1
         port: '27017'
+    globals:
+        version: 2.6.11
     databases: {  }
 redis:
     install: '0'
     settings:
-        conf_port: '6379'
+        port: '6379'
 sqlite:
     install: '0'
     adminer: 0
     databases: {  }
-mailcatcher:
+mailhog:
     install: '1'
     settings:
         smtp_ip: 0.0.0.0
         smtp_port: 1025
         http_ip: 0.0.0.0
-        http_port: '1080'
-        mailcatcher_path: /usr/local/rvm/wrappers/default
-        from_email_method: headers
+        http_port: '8025'
+        path: /usr/local/bin/mailhog
 beanstalkd:
     install: '0'
     settings:
@@ -573,9 +600,10 @@ elastic_search:
     settings:
         version: 1.4.1
         java_install: true
+    instances: {  }
 solr:
-    install: '0'
+    install: '1'
     settings:
         version: 4.10.2
-        port: '8984'
+        port: '8983'
 

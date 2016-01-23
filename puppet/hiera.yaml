@@ -4,6 +4,7 @@
     :datadir: '/vagrant'
 :hierarchy:
     - puphpet/config-custom
+    - vendor/integrated/puphpet/config-%{::provisioner_type}
     - vendor/integrated/puphpet/config
 :merge_behavior: deeper
 :logger: console
