@@ -407,10 +407,10 @@ php:
             - mcrypt
             - curl
             - gd
-            - mongo
         pear: {  }
         pecl:
             - APCu
+            - mongo
     ini:
         display_errors: 'On'
         error_reporting: '-1'
