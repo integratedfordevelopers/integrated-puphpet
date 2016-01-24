@@ -99,7 +99,7 @@ users_groups:
 locale:
     install: '1'
     settings:
-        default_locale: ''
+        default_locale: 'en_US.UTF-8'
         locales:
             - en_GB.UTF-8
             - en_US.UTF-8
@@ -407,6 +407,7 @@ php:
             - mcrypt
             - curl
             - gd
+            - mongo
         pear: {  }
         pecl:
             - APCu
@@ -479,7 +480,7 @@ python:
 nodejs:
     install: '1'
     settings:
-        version: null
+        version: '5'
     npm_packages:
         - less@1.7.5
         - bower
