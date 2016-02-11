@@ -42,29 +42,7 @@ vagrantfile:
                 options:
                     - '--verbose'
                     - '--hiera_config /vagrant/vendor/integrated/puphpet/puppet/hiera.yaml'
-        synced_folder:
-            vflsf_4qy7opsz10vd:
-                source: ./
-                target: /vagrant/
-                sync_type: nfs
-                smb:
-                    smb_host: ''
-                    smb_username: ''
-                    smb_password: ''
-                    mount_options:
-                        dir_mode: '0775'
-                        file_mode: '0664'
-                rsync:
-                    args:
-                        - '--verbose'
-                        - '--archive'
-                        - '-z'
-                    exclude:
-                        - .vagrant/
-                        - .git/
-                    auto: 'true'
-                owner: vagrant
-                group: vagrant
+        synced_folder: { }
         usable_port_range:
             start: 10200
             stop: 10500
@@ -92,6 +70,8 @@ server:
     packages:
         - htop
         - git
+        - pkg-config
+        - libsasl2-dev
 users_groups:
     install: '1'
     groups: {  }
@@ -523,7 +503,7 @@ mariadb:
 mysql:
     install: '1'
     settings:
-        version: '5.6'
+        version: '5.5'
         root_password: root
         override_options: {  }
     adminer: '1'
@@ -607,4 +587,3 @@ solr:
     settings:
         version: 4.10.2
         port: '8983'
-
