@@ -1,8 +1,8 @@
 vagrantfile:
     target: local
     vm:
-        box: puphpet/ubuntu1404-x64
-        box_url: puphpet/ubuntu1404-x64
+        box: puphpet/ubuntu1404-x32
+        box_url: puphpet/ubuntu1404-x32
         hostname: localhost
         memory: '2048'
         cpus: '2'
@@ -68,10 +68,7 @@ vagrantfile:
 server:
     install: '1'
     packages:
-        - htop
         - git
-        - pkg-config
-        - libsasl2-dev
 users_groups:
     install: '1'
     groups: {  }
@@ -233,7 +230,7 @@ locale:
             - zu_ZA.UTF-8
         timezone: UTC
 firewall:
-    install: '1'
+    install: '0'
     rules: {  }
 cron:
     install: '1'
@@ -390,7 +387,6 @@ php:
         pear: {  }
         pecl:
             - APCu
-            - mongo
     ini:
         display_errors: 'On'
         error_reporting: '-1'
@@ -446,7 +442,7 @@ drush:
     install: '0'
     version: 6.3.0
 ruby:
-    install: '1'
+    install: '0'
     versions:
         rv_3lrpsuq0n22f:
             default: '1'
@@ -534,7 +530,7 @@ postgresql:
     grants: {  }
     adminer: 0
 mongodb:
-    install: '1'
+    install: '0'
     settings:
         auth: 1
         bind_ip: 127.0.0.1
@@ -583,7 +579,7 @@ elastic_search:
         java_install: true
     instances: {  }
 solr:
-    install: '1'
+    install: '0'
     settings:
         version: 4.10.2
         port: '8983'
