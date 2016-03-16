@@ -1,8 +1,8 @@
 vagrantfile:
     target: local
     vm:
-        box: puphpet/debian75-x64
-        box_url: puphpet/debian75-x64
+        box: integrated-puphpet/debian75-x64
+        box_url: http://www.integratedfordevelopers.com/integrated-puphpet-0.4-debian75-x64.box
         hostname: localhost
         memory: '2048'
         cpus: '2'
@@ -407,7 +407,7 @@ php:
                 group: vagrant
                 pm: static
                 pm.max_children: '4'
-    composer: '1'
+    composer: '0'
     composer_home: ''
 xdebug:
     install: '1'
