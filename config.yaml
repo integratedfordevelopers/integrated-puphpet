@@ -81,6 +81,7 @@ server:
     packages:
         - htop
         - git
+        - php5-imagick
 users_groups:
     install: '1'
     groups: {  }
