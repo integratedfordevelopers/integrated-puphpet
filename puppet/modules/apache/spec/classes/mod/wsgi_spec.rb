@@ -1,9 +1,7 @@
 require 'spec_helper'
 
 describe 'apache::mod::wsgi', :type => :class do
-  let :pre_condition do
-    'include apache'
-  end
+  it_behaves_like "a mod class, without including apache"
   context "on a Debian OS" do
     let :facts do
       {
@@ -45,6 +43,12 @@ describe 'apache::mod::wsgi', :type => :class do
     }
     it { is_expected.to contain_package("mod_wsgi") }
 
+    describe "with WSGIRestrictEmbedded enabled" do
+      let :params do
+        { :wsgi_restrict_embedded => 'On' }
+      end
+      it {is_expected.to contain_file('wsgi.conf').with_content(/^  WSGIRestrictEmbedded On$/)}
+    end
     describe "with custom WSGISocketPrefix" do
       let :params do
         { :wsgi_socket_prefix => 'run/wsgi' }
@@ -93,7 +97,7 @@ describe 'apache::mod::wsgi', :type => :class do
           :mod_path => '/foo/bar/baz',
         }
       end
-      it { expect { subject }.to raise_error Puppet::Error, /apache::mod::wsgi - both package_name and mod_path must be specified!/ }
+      it { expect { catalogue }.to raise_error Puppet::Error, /apache::mod::wsgi - both package_name and mod_path must be specified!/ }
     end
     describe "with mod_path but no package_name" do
       let :params do
@@ -101,7 +105,7 @@ describe 'apache::mod::wsgi', :type => :class do
           :package_name => '/foo/bar/baz',
         }
       end
-      it { expect { subject }.to raise_error Puppet::Error, /apache::mod::wsgi - both package_name and mod_path must be specified!/ }
+      it { expect { catalogue }.to raise_error Puppet::Error, /apache::mod::wsgi - both package_name and mod_path must be specified!/ }
     end
   end
   context "on a FreeBSD OS" do

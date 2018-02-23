@@ -1,36 +1,45 @@
-Puppet::Type.type(:mongodb_database).provide(:mongodb) do
+require File.expand_path(File.join(File.dirname(__FILE__), '..', 'mongodb'))
+Puppet::Type.type(:mongodb_database).provide(:mongodb, parent: Puppet::Provider::Mongodb) do
+  desc 'Manages MongoDB database.'
 
-  desc "Manages MongoDB database."
+  defaultfor kernel: 'Linux'
 
-  defaultfor :kernel => 'Linux'
+  def self.instances
+    require 'json'
+    dbs = JSON.parse mongo_eval('printjson(db.getMongo().getDBs())')
 
-  commands :mongo => 'mongo'
+    dbs['databases'].map do |db|
+      new(name: db['name'],
+          ensure: :present)
+    end
+  end
 
-  def block_until_mongodb(tries = 10)
-    begin
-      mongo('--quiet', '--eval', 'db.getMongo()')
-    rescue => e
-      debug('MongoDB server not ready, retrying')
-      sleep 2
-      if (tries -= 1) > 0
-        retry
-      else
-        raise e
-      end
+  # Assign prefetched dbs based on name.
+  def self.prefetch(resources)
+    dbs = instances
+    resources.keys.each do |name|
+      provider = dbs.find { |db| db.name == name }
+      resources[name].provider = provider if provider
     end
   end
 
   def create
-    mongo(@resource[:name], '--quiet', '--eval', "db.dummyData.insert({\"created_by_puppet\": 1})")
+    if db_ismaster
+      mongo_eval('db.dummyData.insert({"created_by_puppet": 1})', @resource[:name])
+    else
+      Puppet.warning 'Database creation is available only from master host'
+    end
   end
 
   def destroy
-    mongo(@resource[:name], '--quiet', '--eval', 'db.dropDatabase()')
+    if db_ismaster
+      mongo_eval('db.dropDatabase()', @resource[:name])
+    else
+      Puppet.warning 'Database removal is available only from master host'
+    end
   end
 
   def exists?
-    block_until_mongodb(@resource[:tries])
-    mongo("--quiet", "--eval", 'db.getMongo().getDBNames()').split(",").include?(@resource[:name])
+    !(@property_hash[:ensure] == :absent || @property_hash[:ensure].nil?)
   end
-
 end

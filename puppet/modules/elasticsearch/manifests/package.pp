@@ -1,34 +1,47 @@
-# == Class: elasticsearch::package
-#
 # This class exists to coordinate all software package management related
 # actions, functionality and logical units in a central place.
-#
-#
-# === Parameters
-#
-# This class does not provide any parameters.
-#
-#
-# === Examples
-#
-# This class may be imported by other classes to use its functionality:
-#   class { 'elasticsearch::package': }
 #
 # It is not intended to be used directly by external resources like node
 # definitions or other modules.
 #
+# @example importing this class by other classes to use its functionality:
+#   class { 'elasticsearch::package': }
 #
-# === Authors
-#
-# * Richard Pijnenburg <mailto:richard@ispavailability.com>
+# @author Richard Pijnenburg <richard.pijnenburg@elasticsearch.com>
+# @author Tyler Langlois <tyler.langlois@elastic.co>
 #
 class elasticsearch::package {
 
+  Exec {
+    path      => [ '/bin', '/usr/bin', '/usr/local/bin' ],
+    cwd       => '/',
+    tries     => 3,
+    try_sleep => 10,
+  }
 
-  #### Package management
-
-  # set params: in operation
   if $elasticsearch::ensure == 'present' {
+
+    if $elasticsearch::restart_package_change {
+      Package[$elasticsearch::package_name] ~> Elasticsearch::Service <| |>
+    }
+    Package[$elasticsearch::package_name] ~> Exec['remove_plugin_dir']
+
+    # Create directory to place the package file
+    $package_dir = $elasticsearch::package_dir
+    exec { 'create_package_dir_elasticsearch':
+      cwd     => '/',
+      path    => ['/usr/bin', '/bin'],
+      command => "mkdir -p ${package_dir}",
+      creates => $package_dir,
+    }
+
+    file { $package_dir:
+      ensure  => 'directory',
+      purge   => $elasticsearch::purge_package_dir,
+      force   => $elasticsearch::purge_package_dir,
+      backup  => false,
+      require => Exec['create_package_dir_elasticsearch'],
+    }
 
     # Check if we want to install a specific version or not
     if $elasticsearch::version == false {
@@ -41,72 +54,81 @@ class elasticsearch::package {
     } else {
 
       # install specific version
-      $package_ensure = $elasticsearch::version
+      $package_ensure = $elasticsearch::pkg_version
 
     }
 
     # action
     if ($elasticsearch::package_url != undef) {
 
-      $package_dir = $elasticsearch::package_dir
-
-      # Create directory to place the package file
-      exec { 'create_package_dir_elasticsearch':
-        cwd     => '/',
-        path    => ['/usr/bin', '/bin'],
-        command => "mkdir -p ${elasticsearch::package_dir}",
-        creates => $elasticsearch::package_dir;
+      case $elasticsearch::package_provider {
+        'package': { $before = Package[$elasticsearch::package_name]  }
+        default:   { fail("software provider \"${elasticsearch::package_provider}\".") }
       }
 
-      file { $package_dir:
-        ensure  => 'directory',
-        purge   => $elasticsearch::purge_package_dir,
-        force   => $elasticsearch::purge_package_dir,
-        require => Exec['create_package_dir_elasticsearch'],
-      }
 
-      $filenameArray = split($elasticsearch::package_url, '/')
-      $basefilename = $filenameArray[-1]
+      $filename_array = split($elasticsearch::package_url, '/')
+      $basefilename = $filename_array[-1]
 
-      $sourceArray = split($elasticsearch::package_url, ':')
-      $protocol_type = $sourceArray[0]
+      $source_array = split($elasticsearch::package_url, ':')
+      $protocol_type = $source_array[0]
 
-      $extArray = split($basefilename, '\.')
-      $ext = $extArray[-1]
+      $ext_array = split($basefilename, '\.')
+      $ext = $ext_array[-1]
+
+      $pkg_source = "${package_dir}/${basefilename}"
 
       case $protocol_type {
 
-        puppet: {
+        'puppet': {
 
-          file { "${package_dir}/${basefilename}":
-            ensure  => present,
+          file { $pkg_source:
+            ensure  => file,
             source  => $elasticsearch::package_url,
             require => File[$package_dir],
             backup  => false,
-            before  => Package[$elasticsearch::params::package]
+            before  => $before,
           }
 
         }
-        ftp, https, http: {
+        'ftp', 'https', 'http': {
 
-          exec { 'download_package_elasticsearch':
-            command => "${elasticsearch::params::dlcmd} ${package_dir}/${basefilename} ${elasticsearch::package_url} 2> /dev/null",
-            path    => ['/usr/bin', '/bin'],
-            creates => "${package_dir}/${basefilename}",
-            require => File[$package_dir],
-            before  => Package[$elasticsearch::params::package]
+          if $elasticsearch::proxy_url != undef {
+            $exec_environment = [
+              'use_proxy=yes',
+              "http_proxy=${elasticsearch::proxy_url}",
+              "https_proxy=${elasticsearch::proxy_url}",
+            ]
+          } else {
+            $exec_environment = []
+          }
+
+          case $elasticsearch::download_tool {
+            String: {
+              exec { 'download_package_elasticsearch':
+                command     => "${elasticsearch::download_tool} ${pkg_source} ${elasticsearch::package_url} 2> /dev/null",
+                creates     => $pkg_source,
+                environment => $exec_environment,
+                timeout     => $elasticsearch::package_dl_timeout,
+                require     => File[$package_dir],
+                before      => $before,
+              }
+            }
+            default: {
+              fail("no \$elasticsearch::download_tool defined for ${facts['os']['family']}")
+            }
           }
 
         }
-        file: {
+        'file': {
 
-          $source_path = $sourceArray[1]
-          file { "${package_dir}/${basefilename}":
-            ensure  => present,
+          $source_path = $source_array[1]
+          file { $pkg_source:
+            ensure  => file,
             source  => $source_path,
             require => File[$package_dir],
             backup  => false,
-            before  => Package[$elasticsearch::params::package]
+            before  => $before,
           }
 
         }
@@ -115,31 +137,46 @@ class elasticsearch::package {
         }
       }
 
-      case $ext {
-        'deb':   { $pkg_provider = 'dpkg' }
-        'rpm':   { $pkg_provider = 'rpm'  }
-        default: { fail("Unknown file extention \"${ext}\".") }
+      if ($elasticsearch::package_provider == 'package') {
+
+        case $ext {
+          'deb':   { Package { provider => 'dpkg', source => $pkg_source } }
+          'rpm':   { Package { provider => 'rpm', source => $pkg_source } }
+          default: { fail("Unknown file extention \"${ext}\".") }
+        }
+
       }
 
-      $pkg_source = "${package_dir}/${basefilename}"
-
-    } else {
-      $pkg_source = undef
-      $pkg_provider = undef
     }
 
   # Package removal
   } else {
 
-    $pkg_source = undef
-    $pkg_provider = undef
-    $package_ensure = 'purged'
+    if ($facts['os']['family'] == 'Suse') {
+      Package {
+        provider  => 'rpm',
+      }
+      $package_ensure = 'absent'
+    } else {
+      $package_ensure = 'purged'
+    }
+
   }
 
-  package { $elasticsearch::params::package:
-    ensure   => $package_ensure,
-    source   => $pkg_source,
-    provider => $pkg_provider
+  if ($elasticsearch::package_provider == 'package') {
+
+    package { $elasticsearch::package_name:
+      ensure => $package_ensure,
+    }
+
+    exec { 'remove_plugin_dir':
+      refreshonly => true,
+      command     => "rm -rf ${elasticsearch::plugindir}",
+    }
+
+
+  } else {
+    fail("\"${elasticsearch::package_provider}\" is not supported")
   }
 
 }

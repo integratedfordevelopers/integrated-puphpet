@@ -2,66 +2,64 @@
 
 export DEBIAN_FRONTEND=noninteractive
 
-VAGRANT_CORE_FOLDER=$(cat '/.puphpet-stuff/vagrant-core-folder.txt')
+PUPHPET_CORE_DIR=/opt/puphpet
+PUPHPET_STATE_DIR=/opt/puphpet-state
 
-OS=$(/bin/bash "${VAGRANT_CORE_FOLDER}/shell/os-detect.sh" ID)
-RELEASE=$(/bin/bash "${VAGRANT_CORE_FOLDER}/shell/os-detect.sh" RELEASE)
-CODENAME=$(/bin/bash "${VAGRANT_CORE_FOLDER}/shell/os-detect.sh" CODENAME)
+OS=$(/bin/bash "${PUPHPET_CORE_DIR}/shell/os-detect.sh" ID)
+RELEASE=$(/bin/bash "${PUPHPET_CORE_DIR}/shell/os-detect.sh" RELEASE)
+CODENAME=$(/bin/bash "${PUPHPET_CORE_DIR}/shell/os-detect.sh" CODENAME)
 
-# deep_merge gem required by hiera
-if [[ ! -f /.puphpet-stuff/install-deep_merge-03122015 ]]; then
-    gem install deep_merge --no-ri --no-rdoc
-    touch /.puphpet-stuff/install-deep_merge-03122015
-fi
+if [[ ! -f "${PUPHPET_STATE_DIR}/install-puppet" ]]; then
+    if [[ "${OS}" == 'debian' || "${OS}" == 'ubuntu' ]]; then
+        wget --quiet --tries=5 --connect-timeout=10 \
+            -O ${PUPHPET_STATE_DIR}/puppetlabs.gpg \
+            https://apt.puppetlabs.com/pubkey.gpg
+        apt-key add ${PUPHPET_STATE_DIR}/puppetlabs.gpg
 
-if [[ ! -f /.puphpet-stuff/install-activesupport-03132015 ]]; then
-    gem install activesupport --no-ri --no-rdoc
-    touch /.puphpet-stuff/install-activesupport-03132015
-fi
+        URL="https://apt.puppetlabs.com/puppet5-release-${CODENAME}.deb"
+        wget --quiet --tries=5 --connect-timeout=10 \
+            -O "${PUPHPET_STATE_DIR}/puppet5-release-${CODENAME}.deb" \
+            ${URL}
+        dpkg -i "${PUPHPET_STATE_DIR}/puppet5-release-${CODENAME}.deb"
+        apt-get update
+        apt-get -y install puppet-agent=5.3.*
 
-if [[ ! -f /.puphpet-stuff/install-vine-03202015 ]]; then
-    gem install vine --no-ri --no-rdoc
-    touch /.puphpet-stuff/install-vine-03202015
-fi
-
-if [[ ! -f /.puphpet-stuff/install-augeas-04232015 ]] && [ "${OS}" == 'centos' ]; then
-    echo 'Upgrading augeas'
-    yum -y remove augeas*  >/dev/null
-
-    AUGEAS='http://dl.fedoraproject.org/pub/epel/5/x86_64/augeas-1.2.0-1.el5.x86_64.rpm'
-    AUG_LIBS='http://dl.fedoraproject.org/pub/epel/5/x86_64/augeas-libs-1.2.0-1.el5.x86_64.rpm'
-    yum -y --nogpgcheck install "${AUG_LIBS}" >/dev/null
-    yum -y --nogpgcheck --setopt=protected_multilib=false install "${AUGEAS}" >/dev/null
-    touch /.puphpet-stuff/install-augeas-04232015
-    echo 'Finished upgrading augeas'
-fi
-
-if [[ -f /.puphpet-stuff/install-puppet-3.4.3 ]]; then
-    exit 0
-fi
-
-rm -rf /usr/bin/puppet
-
-if [ "${OS}" == 'debian' ] || [ "${OS}" == 'ubuntu' ]; then
-    apt-get -y install augeas-tools libaugeas-dev
-elif [[ "${OS}" == 'centos' ]]; then
-    yum -y install augeas-devel
-fi
-
-echo 'Installing Puppet requirements'
-gem install haml hiera facter json ruby-augeas deep_merge --no-ri --no-rdoc
-echo 'Finished installing Puppet requirements'
-
-echo 'Installing Puppet 3.4.3'
-gem install puppet --version 3.4.3 --no-ri --no-rdoc
-echo 'Finished installing Puppet 3.4.3'
-
-cat >/usr/bin/puppet << 'EOL'
-#!/bin/bash
-
-rvm ruby-1.9.3-p551 do puppet "$@"
+        cat >/etc/apt/preferences.d/puppet-agent << 'EOL'
+Package: puppet-agent
+Pin: version 5.3.*
+Pin-Priority: 1002
 EOL
+    fi
 
-chmod +x /usr/bin/puppet
+    if [[ "${OS}" == 'centos' ]]; then
+        rpm --import https://yum.puppetlabs.com/RPM-GPG-KEY-puppet
+        rpm -Uvh "https://yum.puppetlabs.com/puppet5/puppet5-release-el-${RELEASE}.noarch.rpm"
+        yum -y install yum-plugin-versionlock puppet-agent-5.3*
+        yum versionlock add puppet-agent
+    fi
 
-touch /.puphpet-stuff/install-puppet-3.4.3
+    rm -f /usr/bin/puppet
+    ln -s /opt/puppetlabs/bin/puppet /usr/bin/puppet
+    touch "${PUPHPET_STATE_DIR}/install-puppet"
+fi
+
+GEM=/opt/puppetlabs/puppet/bin/gem
+
+if [[ ! -f "${PUPHPET_STATE_DIR}/gem_path" ]]; then
+    GEM_PATH=$(${GEM} env gemdir)
+    echo "${GEM_PATH}" > "${PUPHPET_STATE_DIR}/gem_path"
+fi
+
+GEM_PATH=$(cat "${PUPHPET_STATE_DIR}/gem_path")
+
+if ! (${GEM} list deep_merge | grep -q 'deep_merge'); then
+    ${GEM} install deep_merge -v 1.2.1 --no-ri --no-rdoc
+fi
+
+if ! (${GEM} list activesupport | grep -q 'activesupport'); then
+    ${GEM} install activesupport -v 5.1.4 --no-ri --no-rdoc
+fi
+
+if ! (${GEM} list vine | grep -q 'vine'); then
+    ${GEM} install vine -v 0.4 --no-ri --no-rdoc
+fi
