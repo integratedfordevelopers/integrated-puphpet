@@ -31,9 +31,15 @@ vagrantfile:
                                 vflmnfp_94uiaa86wrsa:
                                     host: '8443'
                                     guest: '443'
+                                vflmnfp_jsdfhjhsdkds:
+                                    host: '3306'
+                                    guest: '3306'
                                 vflmnfp_s2kw3om0o2fl:
                                     host: '8025'
                                     guest: '8025'
+                                vflmnfp_fjisdidjgldr:
+                                    host: '27017'
+                                    guest: '27017'
                         memory: '2048'
                         cpus: '4'
         provision:
