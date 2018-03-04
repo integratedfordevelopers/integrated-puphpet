@@ -250,7 +250,7 @@ describe 'apache', :type => :class do
           :operatingsystemrelease => '8'
         })
       end
-      it { is_expected.to contain_file("/var/www/html").with(
+      it { is_expected.to contain_file("/var/www").with(
         'ensure'  => 'directory'
          )
         }
@@ -269,7 +269,7 @@ describe 'apache', :type => :class do
             :operatingsystemrelease => '14.04'
           })
         end
-        it { is_expected.to contain_file("/var/www/html").with(
+        it { is_expected.to contain_file("/var/www").with(
           'ensure'  => 'directory'
           )
         }
@@ -325,7 +325,7 @@ describe 'apache', :type => :class do
     it { is_expected.to contain_user("apache") }
     it { is_expected.to contain_group("apache") }
     it { is_expected.to contain_class("apache::service") }
-    it { is_expected.to contain_file("/var/www/html").with(
+    it { is_expected.to contain_file("/var/www").with(
       'ensure'  => 'directory'
       )
     }
@@ -881,7 +881,7 @@ describe 'apache', :type => :class do
       }
       end
       it { is_expected.to contain_apache__vhost('default').with_ensure('absent') }
-      it { is_expected.not_to contain_file('/var/www/html') }
+      it { is_expected.not_to contain_file('/var/www') }
     end
     context 'with default ssl vhost' do
       let :params do {
@@ -889,7 +889,7 @@ describe 'apache', :type => :class do
         }
       end
       it { is_expected.to contain_apache__vhost('default-ssl').with_ensure('present') }
-      it { is_expected.to contain_file('/var/www/html') }
+      it { is_expected.to contain_file('/var/www') }
     end
   end
   context 'with unsupported osfamily' do
