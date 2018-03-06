@@ -53,10 +53,10 @@ vagrantfile:
                     - '--hiera_config /opt/puphpet/puppet/hiera.yaml'
         synced_folder:
             vflsf_pz96jpwr27qi:
-                owner: www-data
-                group: www-data
+                owner: vagrant
+                group: vagrant
                 source: ./
-                target: /var/www
+                target: /vagrant
                 sync_type: nfs
                 smb:
                     smb_host: ''
@@ -379,7 +379,7 @@ apache:
             servername: localhost.integratedfordevelopers.com
             serveraliases:
                 - localhost
-            docroot: /var/www/web
+            docroot: /vagrant/web
             port: '80'
             setenvif:
                 - 'Authorization "(.*)" HTTP_AUTHORIZATION=$1'
@@ -393,7 +393,7 @@ apache:
             directories:
                 php_html:
                     provider: directory
-                    path: /var/www/web
+                    path: /vagrant/web
                     directoryindex: 'index.php index.html'
                     options:
                         - Indexes
@@ -411,7 +411,7 @@ apache:
             servername: localhost.e-active.nl
             serveraliases:
                 - localhost
-            docroot: /var/www/web
+            docroot: /vagrant/web
             port: '443'
             setenvif:
                 - 'Authorization "(.*)" HTTP_AUTHORIZATION=$1'
@@ -425,7 +425,7 @@ apache:
             directories:
                 php_html:
                     provider: directory
-                    path: /var/www/web
+                    path: /vagrant/web
                     directoryindex: 'index.php index.html'
                     options:
                         - Indexes

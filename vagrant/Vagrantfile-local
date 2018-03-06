@@ -111,6 +111,9 @@ machines.each do |i, machine|
       end
     end
 
+    # /disable /vagrant share to allow custom config
+    config.vm.synced_folder ".", "/vagrant", disabled: true
+
     # https://github.com/smdahlen/vagrant-hostmanager
     if Vagrant.has_plugin?('vagrant-hostmanager')
       hosts = Array.new()
