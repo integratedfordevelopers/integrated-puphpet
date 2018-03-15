@@ -2,8 +2,8 @@
 Integrated PuPHPet provides a Vagrant box for Integrated applications, based on PuPHPet.
 
 ## Requirements ##
-* Vagrant >= 1.7
-* Virtualbox >= 4.3
+* Vagrant >= 2.0
+* Virtualbox >= 5.2
 * On Windows: Vagrant WinNFSd (https://github.com/winnfsd/vagrant-winnfsd)
 * Availability of 2048MB of system memory and 2 cpu cores for you Vagrant box. If you don't have them you have to overrule these settings in the config-custom.yaml.
 

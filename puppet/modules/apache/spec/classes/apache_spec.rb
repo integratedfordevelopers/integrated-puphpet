@@ -110,6 +110,14 @@ describe 'apache', :type => :class do
       it { is_expected.to contain_file("/etc/apache2/apache2.conf").with_content %r{^AllowEncodedSlashes nodecode$} }
     end
 
+    context "when specifying fileETag behaviour" do
+      let :params do
+        { :file_e_tag => 'None' }
+      end
+
+      it { is_expected.to contain_file("/etc/apache2/apache2.conf").with_content %r{^FileETag None$} }
+    end
+
     context "when specifying default character set" do
       let :params do
         { :default_charset => 'none' }
@@ -156,23 +164,23 @@ describe 'apache', :type => :class do
             :apache_version => '2.2',
           }
         end
-    
+
        context "when default_type => 'none'" do
           let :params do
             { :default_type => 'none' }
           end
-    
+
           it { is_expected.to contain_file("/etc/apache2/apache2.conf").with_content %r{^DefaultType none$} }
         end
         context "when default_type => 'text/plain'" do
           let :params do
             { :default_type => 'text/plain' }
           end
-    
+
           it { is_expected.to contain_file("/etc/apache2/apache2.conf").with_content %r{^DefaultType text/plain$} }
         end
       end
-   
+
       context "with Apache version >= 2.4" do
         let :params do
           {
@@ -218,6 +226,35 @@ describe 'apache', :type => :class do
       end
     end
 
+    describe "Override existing LogFormats" do
+      context "When parameter log_formats is a hash" do
+        let :params do
+          { :log_formats => {
+            'common'   => "%v %h %l %u %t \"%r\" %>s %b",
+            'combined' => "%v %h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-agent}i\""
+          } }
+        end
+
+        it { is_expected.to contain_file("/etc/apache2/apache2.conf").with_content %r{^LogFormat "%v %h %l %u %t \"%r\" %>s %b" common\n} }
+        it { is_expected.to contain_file("/etc/apache2/apache2.conf").without_content %r{^LogFormat "%h %l %u %t \"%r\" %>s %b \"%\{Referer\}i\" \"%\{User-agent\}i\"" combined\n} }
+        it { is_expected.to contain_file("/etc/apache2/apache2.conf").with_content %r{^LogFormat "%v %h %l %u %t \"%r\" %>s %b" common\n} }
+        it { is_expected.to contain_file("/etc/apache2/apache2.conf").with_content %r{^LogFormat "%v %h %l %u %t \"%r\" %>s %b \"%\{Referer\}i\" \"%\{User-agent\}i\"" combined\n} }
+        it { is_expected.to contain_file("/etc/apache2/apache2.conf").without_content %r{^LogFormat "%h %l %u %t \"%r\" %>s %b \"%\{Referer\}i\" \"%\{User-agent\}i\"" combined\n} }
+      end
+    end
+
+    context "8" do
+      let :facts do
+        super().merge({
+          :lsbdistcodename        => 'jessie',
+          :operatingsystemrelease => '8'
+        })
+      end
+      it { is_expected.to contain_file("/var/www").with(
+        'ensure'  => 'directory'
+         )
+        }
+      end
     context "on Ubuntu" do
       let :facts do
         super().merge({
@@ -225,6 +262,18 @@ describe 'apache', :type => :class do
         })
       end
 
+      context "14.04" do
+        let :facts do
+          super().merge({
+            :lsbdistrelease         => '14.04',
+            :operatingsystemrelease => '14.04'
+          })
+        end
+        it { is_expected.to contain_file("/var/www").with(
+          'ensure'  => 'directory'
+          )
+        }
+      end
       context "13.10" do
         let :facts do
           super().merge({
@@ -276,7 +325,7 @@ describe 'apache', :type => :class do
     it { is_expected.to contain_user("apache") }
     it { is_expected.to contain_group("apache") }
     it { is_expected.to contain_class("apache::service") }
-    it { is_expected.to contain_file("/var/www/html").with(
+    it { is_expected.to contain_file("/var/www").with(
       'ensure'  => 'directory'
       )
     }
@@ -371,6 +420,37 @@ describe 'apache', :type => :class do
         it { is_expected.to contain_file("/etc/httpd/conf/httpd.conf").with_content %r{^IncludeOptional "/etc/httpd/conf\.d/\*\.conf"$} }
       end
 
+      context "with Apache version < 2.4" do
+        let :params do
+          {
+            :apache_version => '2.2',
+            :rewrite_lock => '/var/lock/subsys/rewrite-lock'
+          }
+        end
+
+        it { is_expected.to contain_file("/etc/httpd/conf/httpd.conf").with_content %r{^RewriteLock /var/lock/subsys/rewrite-lock$} }
+      end
+
+      context "with Apache version < 2.4" do
+        let :params do
+          {
+            :apache_version => '2.2'
+          }
+        end
+
+        it { is_expected.to contain_file("/etc/httpd/conf/httpd.conf").without_content %r{^RewriteLock [.]*$} }
+      end
+
+      context "with Apache version >= 2.4" do
+        let :params do
+          {
+            :apache_version => '2.4',
+            :rewrite_lock => '/var/lock/subsys/rewrite-lock'
+          }
+        end
+        it { is_expected.to contain_file("/etc/httpd/conf/httpd.conf").without_content %r{^RewriteLock [.]*$} }
+      end
+
       context "when specifying slash encoding behaviour" do
         let :params do
           { :allow_encoded_slashes => 'nodecode' }
@@ -432,7 +512,7 @@ describe 'apache', :type => :class do
       it { is_expected.to contain_file("/opt/rh/root/etc/httpd/conf/httpd.conf").with(
         'ensure'  => 'file',
         'notify'  => 'Class[Apache::Service]',
-        'require' => 'Package[httpd]'
+        'require' => ['Package[httpd]', 'Concat[/etc/httpd/conf/ports.conf]'],
       ) }
     end
 
@@ -482,12 +562,6 @@ describe 'apache', :type => :class do
         it { is_expected.not_to contain_class('apache::mod::itk') }
         it { is_expected.not_to contain_class('apache::mod::peruser') }
         it { is_expected.not_to contain_class('apache::mod::prefork') }
-      end
-      context "when declaring mpm_module => breakme" do
-        let :params do
-          { :mpm_module => 'breakme' }
-        end
-        it { expect { subject }.to raise_error Puppet::Error, /does not match/ }
       end
     end
 
@@ -561,8 +635,8 @@ describe 'apache', :type => :class do
         end
         it "should fail" do
           expect do
-            subject
-          end.to raise_error(Puppet::Error, /"foo" does not match/)
+            catalogue
+          end.to raise_error(Puppet::PreformattedError, /Evaluation Error: Error while evaluating a Resource Statement, Class\[Apache\]: parameter 'sendfile' expects a match for Enum\['Off', 'On', 'off', 'on'\]/)
         end
       end
       context "On" do
@@ -660,6 +734,7 @@ describe 'apache', :type => :class do
     # Assert that load files are placed for these mods, but no conf file.
     [
       'auth_basic',
+      'authn_core',
       'authn_file',
       'authz_groupfile',
       'authz_host',
@@ -762,9 +837,43 @@ describe 'apache', :type => :class do
         )
       }
     end
+    context 'with a custom file_mode parameter' do
+      let :params do {
+        :file_mode => '0640'
+      }
+      end
+      it { is_expected.to contain_concat("/etc/httpd/conf/ports.conf").with(
+        'mode' => '0640',
+      )
+      }
+    end
+    context 'with a custom root_directory_options parameter' do
+      let :params do {
+        :root_directory_options => ['-Indexes', '-FollowSymLinks']
+      }
+      end
+      it { is_expected.to contain_file("/etc/httpd/conf/httpd.conf").with_content %r{Options -Indexes -FollowSymLinks} }
+    end
+    context 'with a custom root_directory_secured parameter and Apache < 2.4' do
+      let :params do {
+        :apache_version => '2.2',
+        :root_directory_secured => true
+      }
+      end
+      it { is_expected.to contain_file("/etc/httpd/conf/httpd.conf").with_content %r{Options FollowSymLinks\n\s+AllowOverride None\n\s+Order deny,allow\n\s+Deny from all} }
+    end
+    context 'with a custom root_directory_secured parameter and Apache >= 2.4' do
+      let :params do {
+        :apache_version => '2.4',
+        :root_directory_secured => true
+      }
+      end
+      it { is_expected.to contain_file("/etc/httpd/conf/httpd.conf").with_content %r{Options FollowSymLinks\n\s+AllowOverride None\n\s+Require all denied} }
+    end
     context 'default vhost defaults' do
       it { is_expected.to contain_apache__vhost('default').with_ensure('present') }
       it { is_expected.to contain_apache__vhost('default-ssl').with_ensure('absent') }
+      it { is_expected.to contain_file("/etc/httpd/conf/httpd.conf").with_content %r{Options FollowSymLinks} }
     end
     context 'without default non-ssl vhost' do
       let :params do {
@@ -772,7 +881,7 @@ describe 'apache', :type => :class do
       }
       end
       it { is_expected.to contain_apache__vhost('default').with_ensure('absent') }
-      it { is_expected.not_to contain_file('/var/www/html') }
+      it { is_expected.not_to contain_file('/var/www') }
     end
     context 'with default ssl vhost' do
       let :params do {
@@ -780,7 +889,7 @@ describe 'apache', :type => :class do
         }
       end
       it { is_expected.to contain_apache__vhost('default-ssl').with_ensure('present') }
-      it { is_expected.to contain_file('/var/www/html') }
+      it { is_expected.to contain_file('/var/www') }
     end
   end
   context 'with unsupported osfamily' do
@@ -794,7 +903,7 @@ describe 'apache', :type => :class do
 
     it do
       expect {
-       should compile
+       catalogue
       }.to raise_error(Puppet::Error, /Unsupported osfamily/)
     end
   end

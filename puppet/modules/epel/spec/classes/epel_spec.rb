@@ -8,16 +8,23 @@ require 'classes/shared_testing_source'
 require 'classes/shared_testing_debuginfo'
 
 describe 'epel' do
-  it { should create_class('epel') }
-  it { should contain_class('epel::params') }
+  let :facts do
+    default_facts.merge(
+      operatingsystemrelease:    '7.2.1511',
+      operatingsystemmajrelease: '7'
+    )
+  end
+
+  it { is_expected.to create_class('epel') }
+  it { is_expected.to contain_class('epel::params') }
 
   context "operatingsystem => #{default_facts[:operatingsystem]}" do
     context 'operatingsystemmajrelease => 7' do
       let :facts do
-        default_facts.merge({
-          :operatingsystemrelease     => '7.0.1406',
-          :operatingsystemmajrelease  => '7',
-        })
+        default_facts.merge(
+          operatingsystemrelease:    '7.0.1406',
+          operatingsystemmajrelease: '7'
+        )
       end
 
       it_behaves_like :base_7
@@ -28,21 +35,32 @@ describe 'epel' do
       it_behaves_like :epel_testing_source_7
       it_behaves_like :epel_testing_debuginfo_7
 
-      context 'epel_baseurl => http://example.com/epel/7/x87_74' do
-        let(:params) {{ :epel_baseurl => "http://example.com/epel/7/x87_74" }}
-        it { should contain_yumrepo('epel').with('baseurl'  => 'http://example.com/epel/7/x87_74') }
+      context 'epel_baseurl => https://example.com/epel/7/x87_74' do
+        let(:params) do
+          {
+            epel_baseurl: 'https://example.com/epel/7/x87_74'
+          }
+        end
+
+        it { is_expected.to contain_yumrepo('epel').with(baseurl: 'https://example.com/epel/7/x87_74') }
+        it { is_expected.to contain_yumrepo('epel').with(mirrorlist: 'absent') }
       end
-      
+
       context 'epel_mirrorlist => absent' do
-        let(:params) {{ :epel_mirrorlist => 'absent' }}
-        it { should contain_yumrepo('epel').with('mirrorlist'  => 'absent') }
+        let(:params) do
+          {
+            epel_mirrorlist: 'absent'
+          }
+        end
+
+        it { is_expected.to contain_yumrepo('epel').with(mirrorlist: 'absent') }
       end
 
       context 'operatingsystemmajrelease undef' do
         let :facts do
-          default_facts.merge({
-            :operatingsystemrelease => '7.0.1406',
-          })
+          default_facts.merge(
+            operatingsystemrelease: '7.0.1406'
+          )
         end
 
         it_behaves_like :base_7
@@ -57,10 +75,10 @@ describe 'epel' do
 
     context 'operatingsystemmajrelease => 6' do
       let :facts do
-        default_facts.merge({
-          :operatingsystemrelease     => '6.4',
-          :operatingsystemmajrelease  => '6',
-        })
+        default_facts.merge(
+          operatingsystemrelease:    '6.4',
+          operatingsystemmajrelease: '6'
+        )
       end
 
       it_behaves_like :base_6
@@ -71,21 +89,32 @@ describe 'epel' do
       it_behaves_like :epel_testing_source_6
       it_behaves_like :epel_testing_debuginfo_6
 
-      context 'epel_baseurl => http://example.com/epel/6/x86_64' do
-        let(:params) {{ :epel_baseurl => "http://example.com/epel/6/x86_64" }}
-        it { should contain_yumrepo('epel').with('baseurl'  => 'http://example.com/epel/6/x86_64') }
+      context 'epel_baseurl => https://example.com/epel/6/x86_64' do
+        let(:params) do
+          {
+            epel_baseurl: 'https://example.com/epel/6/x86_64'
+          }
+        end
+
+        it { is_expected.to contain_yumrepo('epel').with(baseurl: 'https://example.com/epel/6/x86_64') }
+        it { is_expected.to contain_yumrepo('epel').with(mirrorlist: 'absent') }
       end
-      
+
       context 'epel_mirrorlist => absent' do
-        let(:params) {{ :epel_mirrorlist => 'absent' }}
-        it { should contain_yumrepo('epel').with('mirrorlist'  => 'absent') }
+        let(:params) do
+          {
+            epel_mirrorlist: 'absent'
+          }
+        end
+
+        it { is_expected.to contain_yumrepo('epel').with(mirrorlist: 'absent') }
       end
 
       context 'operatingsystemmajrelease undef' do
         let :facts do
-          default_facts.merge({
-            :operatingsystemrelease => '6.4',
-          })
+          default_facts.merge(
+            operatingsystemrelease: '6.4'
+          )
         end
 
         it_behaves_like :base_6
@@ -100,10 +129,10 @@ describe 'epel' do
 
     context 'operatingsystemmajrelease => 5' do
       let :facts do
-        default_facts.merge({
-          :operatingsystemrelease     => '5.9',
-          :operatingsystemmajrelease  => '5',
-        })
+        default_facts.merge(
+          operatingsystemrelease:    '5.9',
+          operatingsystemmajrelease: '5'
+        )
       end
 
       it_behaves_like :base_5
@@ -118,22 +147,23 @@ describe 'epel' do
 
   context 'operatingsystem => Amazon' do
     let :facts do
-      default_facts.merge({
-        :operatingsystem  => 'Amazon',
-      })
+      default_facts.merge(
+        operatingsystem:        'Amazon',
+        operatingsystemrelease: 'Amazon'
+      )
     end
 
-    it { should_not contain_yumrepo('epel-testing') }
-    it { should_not contain_yumrepo('epel-testing-debuginfo') }
-    it { should_not contain_yumrepo('epel-testing-source') }
-    it { should_not contain_yumrepo('epel-debuginfo') }
-    it { should_not contain_yumrepo('epel-source') }
+    it { is_expected.not_to contain_yumrepo('epel-testing') }
+    it { is_expected.not_to contain_yumrepo('epel-testing-debuginfo') }
+    it { is_expected.not_to contain_yumrepo('epel-testing-source') }
+    it { is_expected.not_to contain_yumrepo('epel-debuginfo') }
+    it { is_expected.not_to contain_yumrepo('epel-source') }
 
     it do
-      should contain_yumrepo('epel').with({
-        'enabled'   => '1',
-        'gpgcheck'  => '1',
-      })
+      is_expected.to contain_yumrepo('epel').with(
+        enabled:  '1',
+        gpgcheck: '1'
+      )
     end
   end
 end

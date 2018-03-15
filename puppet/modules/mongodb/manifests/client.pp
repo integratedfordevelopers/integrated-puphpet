@@ -2,25 +2,27 @@
 #
 # == Parameters
 #
-# [ensure] Desired ensure state of the package. Optional.
-#   Defaults to 'true'
+# $ensure:: Desired ensure state of the package. Optional. Defaults to 'true'
 #
-# [package_name] Name of the package to install the client from. Default
-#   is repository dependent.
+# $package_name:: Name of the package to install the client from. Default is
+#                 repository dependent.
 #
 class mongodb::client (
-  $ensure       = $mongodb::params::ensure_client,
-  $package_name = $mongodb::params::client_package_name,
+  Variant[Boolean, String] $ensure = $mongodb::params::package_ensure_client,
+  Optional[String] $package_name   = $mongodb::params::client_package_name,
 ) inherits mongodb::params {
-  case $::osfamily {
-    'RedHat', 'Linux': {
-      class { 'mongodb::client::install': }
-    }
-    'Debian': {
-      warning ('Debian client is included by default with server. Please use ::mongodb::server to install the mongo client for Debian family systems.')
-    }
-    default: {
-      # no action taken, failure happens in params.pp
+  $package_ensure = $ensure ? {
+    true     => 'present',
+    false    => 'purged',
+    'absent' => 'purged',
+    default  => $ensure,
+  }
+
+  if $package_name {
+    package { 'mongodb_client':
+      ensure => $package_ensure,
+      name   => $package_name,
+      tag    => 'mongodb',
     }
   }
 }

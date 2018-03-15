@@ -7,9 +7,17 @@ class String
   end
 end
 
-class Fixnum
+class Integer
   def to_bool
     return false if self == 0
+    return true
+  end
+end
+
+class Float
+  def to_bool
+    return false if self == 0
+    return false if self == 0.0
     return true
   end
 end
@@ -25,5 +33,9 @@ class FalseClass
 end
 
 class NilClass
+  def to_bool; false; end
+end
+
+class Symbol
   def to_bool; false; end
 end

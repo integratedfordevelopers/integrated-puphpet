@@ -1,32 +1,54 @@
-# == Define: elasticsearch::service::init
-#
 # This class exists to coordinate all service management related actions,
 # functionality and logical units in a central place.
 #
-# <b>Note:</b> "service" is the Puppet term and type for background processes
+# *Note*: "service" is the Puppet term and type for background processes
 # in general and is used in a platform-independent way. E.g. "service" means
 # "daemon" in relation to Unix-like systems.
 #
+# @param ensure
+#   Controls if the managed resources shall be `present` or
+#   `absent`. If set to `absent`, the managed software packages will being
+#   uninstalled and any traces of the packages will be purged as well as
+#   possible. This may include existing configuration files (the exact
+#   behavior is provider). This is thus destructive and should be used with
+#   care.
 #
-# === Parameters
+# @param init_defaults
+#   Defaults file content in hash representation
 #
-# This class does not provide any parameters.
+# @param init_defaults_file
+#   Defaults file as puppet resource
 #
+# @param init_template
+#   Service file as a template
 #
-# === Examples
+# @param status
+#   Defines the status of the service. If set to `enabled`, the service is
+#   started and will be enabled at boot time. If set to `disabled`, the
+#   service is stopped and will not be started at boot time. If set to `running`,
+#   the service is started but will not be enabled at boot time. You may use
+#   this to start a service on the first Puppet run instead of the system startup.
+#   If set to `unmanaged`, the service will not be started at boot time and Puppet
+#   does not care whether the service is running or not. For example, this may
+#   be useful if a cluster management software is used to decide when to start
+#   the service plus assuring it is running on the desired node.
 #
-# === Authors
+# @author Richard Pijnenburg <richard.pijnenburg@elasticsearch.com>
+# @author Tyler Langlois <tyler.langlois@elastic.co>
 #
-# * Richard Pijnenburg <mailto:richard@ispavailability.com>
-#
-define elasticsearch::service::init{
+define elasticsearch::service::init (
+  Enum['absent', 'present'] $ensure             = $elasticsearch::ensure,
+  Hash                      $init_defaults      = {},
+  Optional[String]          $init_defaults_file = undef,
+  Optional[String]          $init_template      = undef,
+  Elasticsearch::Status     $status             = $elasticsearch::status,
+) {
 
   #### Service management
 
-  # set params: in operation
-  if $elasticsearch::ensure == 'present' {
+  if $ensure == 'present' {
 
-    case $elasticsearch::status {
+    case $status {
       # make sure service is currently running, start it on boot
       'enabled': {
         $service_ensure = 'running'
@@ -48,15 +70,8 @@ define elasticsearch::service::init{
         $service_ensure = undef
         $service_enable = false
       }
-      # unknown status
-      # note: don't forget to update the parameter check in init.pp if you
-      #       add a new or change an existing status.
-      default: {
-        fail("\"${elasticsearch::status}\" is an unknown service status value")
-      }
+      default: { }
     }
-
-  # set params: removal
   } else {
 
     # make sure the service is stopped and disabled (the removal itself will be
@@ -66,67 +81,86 @@ define elasticsearch::service::init{
 
   }
 
-  $notify_service = $elasticsearch::restart_on_change ? {
-    true  => Service[$name],
+  if(has_key($init_defaults, 'ES_USER') and $init_defaults['ES_USER'] != $elasticsearch::elasticsearch_user) {
+    fail('Found ES_USER setting for init_defaults but is not same as elasticsearch_user setting. Please use elasticsearch_user setting.')
+  }
+
+  $new_init_defaults = merge(
+    {
+      'ES_USER' => $elasticsearch::elasticsearch_user,
+      'ES_GROUP' => $elasticsearch::elasticsearch_group,
+      'MAX_OPEN_FILES' => '65536',
+    },
+    $init_defaults
+  )
+
+  $notify_service = $elasticsearch::restart_config_change ? {
+    true  => Service["elasticsearch-instance-${name}"],
     false => undef,
   }
 
+  if ($ensure == 'present') {
 
-  if ( $elasticsearch::status != 'unmanaged' ) {
-
-    # defaults file content. Either from a hash or file
-    if ($elasticsearch::init_defaults_file != undef) {
-      $defaults_content = undef
-      $defaults_source  = $elasticsearch::init_defaults_file
-    } elsif ($elasticsearch::init_defaults != undef and is_hash($elasticsearch::init_defaults) ) {
-      $defaults_content = template("${module_name}/etc/sysconfig/defaults.erb")
-      $defaults_source  = undef
-    } else {
-      $defaults_content = undef
-      $defaults_source  = undef
-    }
-
-    # Check if we are going to manage the defaults file.
-    if ( $defaults_content != undef or $defaults_source != undef ) {
-
-      file { "${elasticsearch::params::defaults_location}/${name}":
-        ensure  => $elasticsearch::ensure,
-        source  => $defaults_source,
-        content => $defaults_content,
-        owner   => 'root',
-        group   => 'root',
-        mode    => '0644',
-        before  => Service[$name],
-        notify  => $notify_service
+    # Defaults file, either from file source or from hash to augeas commands
+    if ($init_defaults_file != undef) {
+      file { "${elasticsearch::defaults_location}/elasticsearch-${name}":
+        ensure => $ensure,
+        source => $init_defaults_file,
+        owner  => 'root',
+        group  => '0',
+        mode   => '0644',
+        before => Service["elasticsearch-instance-${name}"],
+        notify => $notify_service,
       }
-
+    } else {
+      augeas { "defaults_${name}":
+        incl    => "${elasticsearch::defaults_location}/elasticsearch-${name}",
+        lens    => 'Shellvars.lns',
+        changes => template("${module_name}/etc/sysconfig/defaults.erb"),
+        before  => Service["elasticsearch-instance-${name}"],
+        notify  => $notify_service,
+      }
     }
 
     # init file from template
-    if ($elasticsearch::init_template != undef) {
+    if ($init_template != undef) {
 
-      file { "/etc/init.d/${name}":
-        ensure  => $elasticsearch::ensure,
-        content => template($elasticsearch::init_template),
-        owner   => 'root',
-        group   => 'root',
-        mode    => '0755',
-        before  => Service[$name],
-        notify  => $notify_service
+      elasticsearch_service_file { "/etc/init.d/elasticsearch-${name}":
+        ensure       => $ensure,
+        content      => file($init_template),
+        instance     => $name,
+        notify       => $notify_service,
+        package_name => $elasticsearch::package_name,
+      }
+      -> file { "/etc/init.d/elasticsearch-${name}":
+        ensure => $ensure,
+        owner  => 'root',
+        group  => '0',
+        mode   => '0755',
+        before => Service["elasticsearch-instance-${name}"],
+        notify => $notify_service,
       }
 
+    }
+
+  } else { # absent
+
+    file { "/etc/init.d/elasticsearch-${name}":
+      ensure    => 'absent',
+      subscribe => Service["elasticsearch-instance-${name}"],
+    }
+
+    file { "${elasticsearch::defaults_location}/elasticsearch-${name}":
+      ensure    => 'absent',
+      subscribe => Service["elasticsearch-${$name}"],
     }
 
   }
 
   # action
-  service { $name:
-    ensure     => $service_ensure,
-    enable     => $service_enable,
-    name       => $elasticsearch::params::service_name,
-    hasstatus  => $elasticsearch::params::service_hasstatus,
-    hasrestart => $elasticsearch::params::service_hasrestart,
-    pattern    => $elasticsearch::params::service_pattern,
+  service { "elasticsearch-instance-${name}":
+    ensure => $service_ensure,
+    enable => $service_enable,
+    name   => "elasticsearch-${name}",
   }
-
 }

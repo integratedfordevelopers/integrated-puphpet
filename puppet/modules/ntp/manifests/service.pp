@@ -1,15 +1,13 @@
-#
+# @api private
+# This class handles the ntp service. Avoid modifying private classes.
 class ntp::service inherits ntp {
 
-  if ! ($service_ensure in [ 'running', 'stopped' ]) {
-    fail('service_ensure parameter must be running or stopped')
-  }
-
-  if $service_manage == true {
+  if $ntp::service_manage == true {
     service { 'ntp':
-      ensure     => $service_ensure,
-      enable     => $service_enable,
-      name       => $service_name,
+      ensure     => $ntp::service_ensure,
+      enable     => $ntp::service_enable,
+      name       => $ntp::service_name,
+      provider   => $ntp::service_provider,
       hasstatus  => true,
       hasrestart => true,
     }
