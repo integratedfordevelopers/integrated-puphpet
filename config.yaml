@@ -317,6 +317,8 @@ apache:
             servername: localhost
             docroot: /vagrant/web
             port: '8080'
+            setenvif:
+                - 'Authorization "(.*)" HTTP_AUTHORIZATION=$1'
             custom_fragment: ''
             ssl: '0'
             ssl_cert: ''
@@ -369,6 +371,8 @@ apache:
             servername: localhost
             docroot: /vagrant/web
             port: '4443'
+            setenvif:
+                - 'Authorization "(.*)" HTTP_AUTHORIZATION=$1'
             custom_fragment: ''
             ssl: '1'
             ssl_cert: ''
