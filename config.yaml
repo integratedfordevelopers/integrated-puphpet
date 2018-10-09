@@ -3,7 +3,7 @@ vagrantfile:
     vm:
         provider:
             local:
-                box: integrated-puphpet/ubuntu-16.04-6
+                box: integrated-puphpet-0.10-ubuntu-16.04-x64-2
                 box_url: http://www.integratedfordevelopers.com/integrated-puphpet-0.10-ubuntu-16.04-x64-2.box
                 box_version: '0'
                 chosen_virtualizer: virtualbox
