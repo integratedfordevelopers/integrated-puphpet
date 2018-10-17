@@ -8,5 +8,5 @@ hierarchy:
   - name: YAML data
     paths:
       - "config-%{::provisioner_type}.yaml"
-      - config-custom.yaml
+      - /vagrant/puphpet/config-custom.yaml
       - config.yaml

@@ -14,7 +14,7 @@ class puphpet::params (
     "${puphpet_core_dir}/config-${provisioner_type}.yaml",
   ]
 
-  $custom_config = ["${puphpet_core_dir}/config-custom.yaml"]
+  $custom_config = ["/vagrant/puphpet/config-custom.yaml"]
 
   $yaml = merge_yaml($base_configs, $extra_config_files, $custom_config)
 
